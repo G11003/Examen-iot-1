@@ -48,20 +48,29 @@
                         </div>
                     </div>
                     <div class="tab-pane fade p-3" id="bebidas-content" role="tabpanel">
-                        <h2 class="h5 mb-3">Añadir Nuevo Tipo de Bebida</h2>
-                        <form id="formBebida" class="row g-3">
-                            <div class="col-md-8">
-                                <label for="bebidaNombre" class="form-label">Nombre de la Bebida</label>
-                                <input type="text" class="form-control" id="bebidaNombre" placeholder="Ej: AMERICANO" required>
-                            </div>
-                            <div class="col-md-4 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary w-100">Añadir Bebida</button>
-                            </div>
-                        </form>
-                        <hr>
-                        <h2 class="h5 mt-4">Bebidas Disponibles</h2>
-                        <ul class="list-group" id="bebidasList"></ul>
-                    </div>                
+    <h2 class="h5 mb-3">Añadir o Editar Receta de Bebida</h2>
+    <form id="formBebida" class="row g-3">
+        <div class="col-md-4">
+            <label for="bebidaNombre" class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="bebidaNombre" placeholder="Ej: CORTADO" required>
+        </div>
+        <div class="col-md-3">
+            <label for="porcentajeCafe" class="form-label">Café (%)</label>
+            <input type="number" class="form-control" id="porcentajeCafe" value="100" min="0" max="100" required>
+        </div>
+        <div class="col-md-3">
+            <label for="porcentajeLeche" class="form-label">Leche (%)</label>
+            <input type="number" class="form-control" id="porcentajeLeche" value="0" min="0" max="100" required>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Añadir</button>
+        </div>
+    </form>
+    <hr>
+    <h2 class="h5 mt-4">Recetas Disponibles</h2>
+    <ul class="list-group" id="bebidasList">
+        </ul>
+</div>    
                     <div class="tab-pane fade p-3" id="capsulas-content" role="tabpanel">
                         <h2 class="h5 mb-3">Añadir Cápsulas al Inventario Visual</h2>
                         <form id="formCapsulas" class="row g-3 align-items-end">

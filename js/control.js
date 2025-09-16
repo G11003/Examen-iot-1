@@ -1,10 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Selectores del DOM y Variables ---
     const cafeteraSelector = document.getElementById('cafeteraSelector');
     const cafeteraInfo = document.getElementById('cafeteraInfo');
     const controlsContainer = document.getElementById('controlsContainer');
     const btnIniciar = document.getElementById('btnIniciar');
     const tipoBebidaSelect = document.getElementById('tipoBebida');
-
     let cafeteras = [];
     let statusCache = {};
 
@@ -68,7 +68,10 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelector(`input[name="temp"][value="${status.temperatura_setting}"]`).checked = true;
 
             controlsContainer.classList.remove('d-none');
-            btnIniciar.disabled = !status.power_status || status.brewing_status !== 'inactivo';
+            
+            // **LÓGICA SIMPLIFICADA:** El botón solo depende de si la máquina está encendida.
+            btnIniciar.disabled = !status.power_status;
+
         } catch (error) {
             console.error(error);
             alert('Error al cargar el estado de la cafetera.');
@@ -89,7 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Error al actualizar el estado');
             const estadoActualizado = await response.json();
             statusCache[cafeteraId] = estadoActualizado;
-            btnIniciar.disabled = !estadoActualizado.power_status || estadoActualizado.brewing_status !== 'inactivo';
+            
+            // **LÓGICA SIMPLIFICADA:** El botón solo depende de si la máquina está encendida.
+            btnIniciar.disabled = !estadoActualizado.power_status;
+            
             return estadoActualizado;
         } catch (error) {
             console.error(error);
@@ -104,9 +110,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const estadoActual = statusCache[cafeteraId];
         if (!cafeteraSeleccionada || !estadoActual) return;
         btnIniciar.disabled = true;
-        btnIniciar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Iniciando...';
+        btnIniciar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Redirigiendo...';
         try {
-            await actualizarEstado(cafeteraId, { brewing_status: 'calentando', brewing_progreso: 0 });
+            // Se establece el estado inicial y se "olvida" de él.
+            await actualizarEstado(cafeteraId, { brewing_status: 'calentando_cafe', brewing_progreso: 0 });
+
             const registroHistorial = {
                 cafeteraId: cafeteraId,
                 ip_address: cafeteraSeleccionada.ip_address,
@@ -120,6 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(registroHistorial)
             });
+            
+            // Redirige a la página de monitoreo para observar el proceso.
             window.location.href = `monitoreo.html?id=${cafeteraId}`;
         } catch (error) {
             console.error(error);

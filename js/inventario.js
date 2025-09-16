@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cafeterasTableBody = document.getElementById('cafeterasTableBody');
     const capsulasTableBody = document.getElementById('capsulasTableBody');
     const capsulaCafeteraSelect = document.getElementById('capsulaCafeteraSelect');
-    const capsulaTipoSelect = document.getElementById('capsulaTipo'); // Selector para el menú de cápsulas
+    const capsulaTipoSelect = document.getElementById('capsulaTipo');
     const formCafetera = document.getElementById('formCafetera');
     const formCapsulas = document.getElementById('formCapsulas');
     const modal = new bootstrap.Modal(document.getElementById('cafeteraModal'));
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
             bebidas.forEach(bebida => {
                 const li = document.createElement('li');
                 li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                li.textContent = bebida.nombre;
+                li.innerHTML = `<span>${bebida.nombre} <small class="text-muted">(${bebida.porcentaje_cafe}% Café / ${bebida.porcentaje_leche}% Leche)</small></span>`;
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'btn btn-danger btn-sm btn-eliminar-bebida';
                 deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
@@ -98,35 +98,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 li.appendChild(deleteBtn);
                 bebidasList.appendChild(li);
             });
-
-            // **LÍNEA CLAVE:** Actualiza el menú de cápsulas cada vez que se cargan las bebidas
             cargarBebidasEnSelectorCapsulas(bebidas);
-            
         } catch (error) {
             console.error("Error al cargar bebidas:", error);
             bebidasList.innerHTML = '<li class="list-group-item text-danger">Error al cargar la lista.</li>';
         }
     };
-    
     const anadirBebida = async (e) => {
         e.preventDefault();
-        const nombre = bebidaNombreInput.value.trim().toUpperCase();
+        const nombre = document.getElementById('bebidaNombre').value.trim().toUpperCase();
+        const porcentajeCafe = parseInt(document.getElementById('porcentajeCafe').value, 10);
+        const porcentajeLeche = parseInt(document.getElementById('porcentajeLeche').value, 10);
         if (!nombre) return;
+        if ((porcentajeCafe + porcentajeLeche) > 100) {
+            alert("Error: La suma de los porcentajes no puede ser mayor a 100.");
+            return;
+        }
+        const nuevaBebida = { nombre: nombre, porcentaje_cafe: porcentajeCafe, porcentaje_leche: porcentajeLeche };
         try {
-            await fetch(`${API_URL}/bebidas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre: nombre }) });
-            bebidaNombreInput.value = '';
-            cargarBebidas(); // Esto recargará la lista Y el menú desplegable
+            await fetch(`${API_URL}/bebidas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(nuevaBebida) });
+            document.getElementById('formBebida').reset();
+            cargarBebidas();
         } catch (error) {
             console.error("Error al añadir bebida:", error);
             alert("No se pudo añadir la bebida.");
         }
     };
-
     const eliminarBebida = async (id) => {
         if (!confirm('¿Está seguro de que desea eliminar este tipo de bebida?')) return;
         try {
             await fetch(`${API_URL}/bebidas/${id}`, { method: 'DELETE' });
-            cargarBebidas(); // Esto recargará la lista Y el menú desplegable
+            cargarBebidas();
         } catch (error) {
             console.error("Error al eliminar bebida:", error);
             alert("No se pudo eliminar la bebida.");
@@ -134,8 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- FUNCIONES PARA CÁPSULAS (VISUAL) ---
-    
-    // **NUEVA FUNCIÓN** para llenar el selector de tipo de café dinámicamente
     const cargarBebidasEnSelectorCapsulas = (bebidas) => {
         capsulaTipoSelect.innerHTML = '';
          if (bebidas.length === 0) {
@@ -148,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
             capsulaTipoSelect.appendChild(option);
         });
     };
-    
     const renderizarTablaCapsulas = () => {
         capsulasTableBody.innerHTML = '';
         if (inventarioCapsulas.length === 0) {
@@ -160,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
             capsulasTableBody.appendChild(tr);
         });
     };
-
     const manejarSubmitCapsula = (e) => {
         e.preventDefault();
         if (!capsulaCafeteraSelect.value) {
@@ -193,7 +191,16 @@ document.addEventListener('DOMContentLoaded', () => {
     formCafetera.addEventListener('submit', manejarSubmitCafetera);
     formCapsulas.addEventListener('submit', manejarSubmitCapsula);
     formBebida.addEventListener('submit', anadirBebida);
-    bebidasList.addEventListener('click', (e) => { if (e.target.closest('.btn-eliminar-bebida')) { const id = e.target.closest('.btn-eliminar-bebida').dataset.id; eliminarBebida(id); } });
+    
+    // **BLOQUE DE CÓDIGO CLAVE PARA EL BOTÓN DE ELIMINAR**
+    bebidasList.addEventListener('click', (e) => {
+        // Busca el botón más cercano al elemento donde se hizo clic
+        const boton = e.target.closest('.btn-eliminar-bebida');
+        if (boton) {
+            const id = boton.dataset.id;
+            eliminarBebida(id);
+        }
+    });
 
     // --- Carga Inicial ---
     cargarCafeteras();

@@ -8,9 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const beverageDetails = document.getElementById('beverageDetails');
     const alertSection = document.getElementById('alertSection');
     const alertMessage = document.getElementById('alertMessage');
+    const continueBtn = document.getElementById('continueBtn');
     const lastUpdated = document.getElementById('lastUpdated');
-    
-    // Selectores para la taza interactiva
     const liquid = document.getElementById('liquid');
     const steam = document.getElementById('steam');
     const waves = document.getElementById('waves');
@@ -18,124 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let cafeteraData = null;
     let statusData = null;
     let monitoringInterval = null;
+    let isSimulating = false;
 
-    // --- 1. Obtener ID de la URL y Cargar Datos Iniciales ---
-    const iniciarMonitoreo = async () => {
-        const params = new URLSearchParams(window.location.search);
-        const cafeteraId = params.get('id');
+    // --- Funciones Auxiliares ---
+    const randomDelay = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
 
-        if (!cafeteraId) {
-            loadingState.innerHTML = '<p class="text-danger">Error: No se especificó un ID de cafetera.</p>';
-            return;
-        }
-
-        try {
-            const cafeteraResponse = await fetch(`${API_URL}/cafeteras/${cafeteraId}`);
-            if (!cafeteraResponse.ok) throw new Error('No se encontró la cafetera');
-            cafeteraData = await cafeteraResponse.json();
-
-            cafeteraTitle.textContent = `Monitoreando: ${cafeteraData.nombre} (${cafeteraData.ubicacion})`;
-
-            await actualizarEstado();
-            monitoringInterval = setInterval(actualizarEstado, 2000);
-
-            loadingState.classList.add('d-none');
-            monitoringContent.classList.remove('d-none');
-        } catch (error) {
-            console.error(error);
-            loadingState.innerHTML = `<p class="text-danger">Error al cargar la cafetera: ${error.message}</p>`;
-        }
-    };
-
-    // --- 2. Función para Obtener y Actualizar el Estado (cada 2 seg) ---
-    const actualizarEstado = async () => {
-        if (!cafeteraData) return;
-        
-        try {
-            const statusResponse = await fetch(`${API_URL}/cafetera_status?cafeteraId=${cafeteraData.id}`);
-            if (!statusResponse.ok) throw new Error('Fallo al obtener el estado');
-            const statusArray = await statusResponse.json();
-            
-            if (statusArray.length === 0) {
-                throw new Error('El estado de la cafetera no fue encontrado.');
-            }
-            statusData = statusArray[0];
-            
-            renderizarUI();
-            simularProceso();
-
-        } catch (error) {
-            console.error(error);
-            clearInterval(monitoringInterval);
-            statusBadge.textContent = 'ERROR';
-            statusBadge.className = 'badge bg-danger';
-        }
-    };
-
-    // --- 3. Renderizar (dibujar) la UI con los nuevos datos ---
-    const renderizarUI = () => {
-        if (!statusData) return;
-
-        // Actualizar Badge de Estado y Barra de Progreso
-        statusBadge.textContent = statusData.brewing_status.toUpperCase();
-        let badgeClass = 'bg-secondary';
-        switch(statusData.brewing_status) {
-            case 'calentando': badgeClass = 'bg-warning text-dark'; break;
-            case 'dispensando': badgeClass = 'bg-info text-dark'; break;
-            case 'finalizado': badgeClass = 'bg-success'; break;
-            case 'error': badgeClass = 'bg-danger'; break;
-        }
-        statusBadge.className = `badge ${badgeClass}`;
-
-        progressBar.style.width = `${statusData.brewing_progreso}%`;
-        progressBar.textContent = `${statusData.brewing_progreso}%`;
-        progressBar.setAttribute('aria-valuenow', statusData.brewing_progreso);
-        
-        // Actualizar Detalles y Timestamp
-        beverageDetails.textContent = `Preparando: ${statusData.tipo_bebida} ${statusData.tamano_taza} (${statusData.temperatura_setting})`;
-        lastUpdated.textContent = new Date(statusData.last_updated).toLocaleTimeString();
-
-        // --- ACTUALIZAR TAZA INTERACTIVA ---
-        actualizarTaza(statusData);
-    };
-
-    // --- 4. Función para controlar la animación de la taza ---
-    const actualizarTaza = (estado) => {
-        // Nivel del líquido
-        liquid.style.height = `${estado.brewing_progreso}%`;
-
-        // Color del líquido (simple por ahora, podría ser más complejo)
-        let colorCafe = '#654321';
-        if (estado.tipo_bebida === 'LATTE' || estado.tipo_bebida === 'CAPUCCINO') {
-            colorCafe = '#a05a2c'; // Un café con leche más claro
-        }
-        liquid.style.background = `linear-gradient(145deg, ${colorCafe} 0%, #3a2411 100%)`;
-        
-        // Mostrar/Ocultar vapor y ondas
-        const enProceso = estado.brewing_status === 'calentando' || estado.brewing_status === 'dispensando';
-        
-        steam.style.display = (enProceso && estado.temperatura_setting === 'caliente') ? 'block' : 'none';
-        waves.style.display = enProceso ? 'block' : 'none';
-    };
-
-
-    // --- 5. Lógica de Simulación (Client-side) ---
-    const simularProceso = () => {
-        if (statusData.brewing_status === 'calentando' && statusData.brewing_progreso < 50) {
-            setTimeout(() => actualizarEstadoAPI({ brewing_progreso: 50, brewing_status: 'dispensando' }), 3000);
-        } else if (statusData.brewing_status === 'dispensando' && statusData.brewing_progreso < 100) {
-            setTimeout(() => actualizarEstadoAPI({ brewing_progreso: 100, brewing_status: 'finalizado' }), 4000);
-        } else if (statusData.brewing_status === 'finalizado') {
-            clearInterval(monitoringInterval);
-            if ((statusData.tipo_bebida === 'CAPUCCINO' || statusData.tipo_bebida === 'LATTE')) {
-                alertMessage.textContent = '¡Atención! Inserte la cápsula de leche y presione continuar.';
-                alertSection.classList.remove('d-none');
-            }
-            setTimeout(() => actualizarEstadoAPI({ brewing_status: 'inactivo', brewing_progreso: 0 }), 8000); // 8 segundos para reiniciar
-        }
-    };
-    
-    // --- 6. Función auxiliar para enviar updates a la API durante la simulación ---
     const actualizarEstadoAPI = async (cambios) => {
         if (!statusData) return;
         const estadoCompleto = { ...statusData, ...cambios };
@@ -145,10 +31,151 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(estadoCompleto)
             });
+        } catch (error) { console.error('Error en la simulación:', error); }
+    };
+    
+    const obtenerReceta = async (nombreBebida) => {
+        try {
+            const response = await fetch(`${API_URL}/bebidas?nombre=${nombreBebida}`);
+            const recetaArray = await response.json();
+            if (recetaArray.length > 0) {
+                return { coffee: recetaArray[0].porcentaje_cafe, milk: recetaArray[0].porcentaje_leche };
+            }
         } catch (error) {
-            console.error('Error en la simulación:', error);
+            console.error("No se pudo obtener la receta:", error);
+        }
+        return { coffee: 100, milk: 0 };
+    };
+
+    // --- Lógica Principal de la Página ---
+    const actualizarTaza = (estado) => {
+        liquid.style.height = `${estado.brewing_progreso}%`;
+        let colorPrincipal = '#654321';
+        if (estado.brewing_status.includes('leche')) {
+            colorPrincipal = '#9c6e3fff';
+        } else if (['LATTE', 'CAPUCCINO', 'CORTADO'].includes(estado.tipo_bebida)) {
+            colorPrincipal = '#bf8660ff';
+        }
+        liquid.style.background = `linear-gradient(145deg, ${colorPrincipal} 0%, #3a2411 100%)`;
+        const enProceso = estado.brewing_status.includes('calentando') || estado.brewing_status.includes('dispensando');
+        steam.style.display = (enProceso && estado.temperatura_setting === 'caliente') ? 'block' : 'none';
+        waves.style.display = enProceso ? 'block' : 'none';
+    };
+
+    const renderizarUI = () => {
+        if (!statusData) return;
+        statusBadge.textContent = statusData.brewing_status.replace('_', ' ').toUpperCase();
+        let badgeClass = 'bg-secondary';
+        const status = statusData.brewing_status;
+        if (status.includes('calentando')) badgeClass = 'bg-warning text-dark';
+        else if (status.includes('dispensando')) badgeClass = 'bg-info text-dark';
+        else if (status === 'finalizado') badgeClass = 'bg-success';
+        else if (status === 'error') badgeClass = 'bg-danger';
+        else if (status === 'esperando_leche') badgeClass = 'bg-light text-dark border border-secondary';
+        statusBadge.className = `badge ${badgeClass}`;
+        progressBar.style.width = `${statusData.brewing_progreso}%`;
+        progressBar.textContent = `${statusData.brewing_progreso}%`;
+        beverageDetails.textContent = `Preparando: ${statusData.tipo_bebida} ${statusData.tamano_taza}`;
+        lastUpdated.textContent = new Date(statusData.last_updated).toLocaleTimeString();
+        actualizarTaza(statusData);
+    };
+
+    const simularProceso = async () => {
+        if (document.hidden || !statusData || isSimulating) return;
+        const receta = await obtenerReceta(statusData.tipo_bebida);
+        const ejecutarSimulacion = (accion, duracion) => {
+            isSimulating = true;
+            setTimeout(() => {
+                actualizarEstadoAPI(accion).then(() => {
+                    isSimulating = false;
+                });
+            }, duracion);
+        };
+
+        switch (statusData.brewing_status) {
+            case 'calentando_cafe':
+                ejecutarSimulacion({ brewing_status: 'dispensando_cafe', brewing_progreso: 15 }, randomDelay(2000, 3000));
+                break;
+            case 'dispensando_cafe':
+                const proximoEstado = receta.milk > 0 ? 'esperando_leche' : 'finalizado';
+                const progresoFinalCafe = receta.milk > 0 ? receta.coffee : 100;
+                ejecutarSimulacion({ brewing_progreso: progresoFinalCafe, brewing_status: proximoEstado }, randomDelay(3000, 5000));
+                break;
+            case 'esperando_leche':
+                alertSection.classList.remove('d-none');
+                alertSection.classList.add('d-flex');
+                alertMessage.textContent = '¡Atención! Inserte la cápsula de leche.';
+                continueBtn.disabled = false;
+                clearInterval(monitoringInterval);
+                break;
+            case 'calentando_leche':
+                 ejecutarSimulacion({ brewing_status: 'dispensando_leche' }, randomDelay(1500, 2500));
+                break;
+            case 'dispensando_leche':
+                ejecutarSimulacion({ brewing_progreso: 100, brewing_status: 'finalizado' }, randomDelay(3000, 5000));
+                break;
+            case 'finalizado':
+                clearInterval(monitoringInterval);
+                setTimeout(() => actualizarEstadoAPI({ brewing_status: 'inactivo', brewing_progreso: 0 }), 8000);
+                break;
         }
     };
+
+const actualizarEstado = async () => {
+    if (!cafeteraData) return;
+    try {
+        const statusResponse = await fetch(`${API_URL}/cafetera_status?cafeteraId=${cafeteraData.id}`);
+        if (!statusResponse.ok) throw new Error('Fallo al obtener el estado');
+        
+        // CORRECCIÓN: Usamos la variable correcta 'statusResponse' en lugar de 'response'
+        const statusArray = await statusResponse.json();
+        
+        if (statusArray.length === 0) throw new Error('El estado de la cafetera no fue encontrado.');
+        
+        statusData = statusArray[0];
+        await renderizarUI();
+        if (!isSimulating) {
+            simularProceso();
+        }
+    } catch (error) {
+        console.error(error);
+        clearInterval(monitoringInterval);
+        statusBadge.textContent = 'ERROR';
+        statusBadge.className = 'badge bg-danger';
+    }
+};
+
+    const iniciarMonitoreo = async () => {
+        const params = new URLSearchParams(window.location.search);
+        const cafeteraId = params.get('id');
+        if (!cafeteraId) {
+            loadingState.innerHTML = '<p class="text-danger">Error: No se especificó un ID de cafetera.</p>';
+            return;
+        }
+        try {
+            const cafeteraResponse = await fetch(`${API_URL}/cafeteras/${cafeteraId}`);
+            if (!cafeteraResponse.ok) throw new Error('No se encontró la cafetera con ese ID.');
+            cafeteraData = await cafeteraResponse.json();
+            cafeteraTitle.textContent = `Monitoreando: ${cafeteraData.nombre} (${cafeteraData.ubicacion})`;
+            await actualizarEstado();
+            loadingState.classList.add('d-none');
+            monitoringContent.classList.remove('d-none');
+            monitoringInterval = setInterval(actualizarEstado, 2000);
+        } catch (error) {
+            console.error(error);
+            loadingState.innerHTML = `<p class="text-danger"><b>Error al Cargar:</b> ${error.message}</p><a href="control.html">Volver a Control</a>`;
+        }
+    };
+
+    // --- Event Listeners ---
+    continueBtn.addEventListener('click', () => {
+        continueBtn.disabled = true;
+        alertSection.classList.add('d-none');
+        alertSection.classList.remove('d-flex');
+        actualizarEstadoAPI({ brewing_status: 'calentando_leche' }).then(() => {
+            monitoringInterval = setInterval(actualizarEstado, 2000);
+        });
+    });
 
     // --- Carga Inicial ---
     iniciarMonitoreo();
