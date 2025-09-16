@@ -9,125 +9,40 @@
 </head>
 <body class="bg-light">
 
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="index.html">
+            <i class="bi bi-cup-hot-fill me-2"></i>Cafetera IoT
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item"><a class="nav-link" href="control.html">Control</a></li>
+            <li class="nav-item"><a class="nav-link" href="monitoreo.html">Monitoreo</a></li>
+            <li class="nav-item"><a class="nav-link active" href="inventario.html">Inventario</a></li>
+            <li class="nav-item"><a class="nav-link" href="historial.html">Historial</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
     <div class="container mt-5">
         <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">
+            <div class="card-header">
                 <h1 class="h4 mb-0"><i class="bi bi-box-seam-fill me-2"></i>Página de Inventario</h1>
             </div>
             <div class="card-body">
-                <ul class="nav nav-tabs" id="inventarioTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="cafeteras-tab" data-bs-toggle="tab" data-bs-target="#cafeteras-content" type="button" role="tab">Gestión de Cafeteras</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="capsulas-tab" data-bs-toggle="tab" data-bs-target="#capsulas-content" type="button" role="tab">Gestión de Cápsulas (Visual)</button>
-                    </li>
-                </ul>
-
+                <ul class="nav nav-tabs" id="inventarioTabs" role="tablist"><li class="nav-item" role="presentation"><button class="nav-link active" id="cafeteras-tab" data-bs-toggle="tab" data-bs-target="#cafeteras-content">Gestión de Cafeteras</button></li><li class="nav-item" role="presentation"><button class="nav-link" id="capsulas-tab" data-bs-toggle="tab" data-bs-target="#capsulas-content">Gestión de Cápsulas (Visual)</button></li></ul>
                 <div class="tab-content" id="inventarioTabsContent">
-                    <div class="tab-pane fade show active p-3" id="cafeteras-content" role="tabpanel">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h2 class="h5">Listado de Cafeteras</h2>
-                            <button class="btn btn-primary" id="btnAnadirCafetera" data-bs-toggle="modal" data-bs-target="#cafeteraModal">
-                                <i class="bi bi-plus-circle-fill me-2"></i>Añadir Cafetera
-                            </button>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Nombre</th>
-                                        <th>Ubicación</th>
-                                        <th>IP</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="cafeterasTableBody">
-                                    </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="tab-pane fade p-3" id="capsulas-content" role="tabpanel">
-                        <h2 class="h5 mb-3">Añadir Cápsulas al Inventario Visual</h2>
-                        <form id="formCapsulas" class="row g-3 align-items-end">
-                            <div class="col-md-4">
-                                <label for="capsulaCafeteraSelect" class="form-label">Cafetera</label>
-                                <select id="capsulaCafeteraSelect" class="form-select" required></select>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="capsulaTipo" class="form-label">Tipo de Café</label>
-                                <select id="capsulaTipo" class="form-select" required>
-                                    <option value="ESPRESSO">Espresso</option>
-                                    <option value="LATTE">Latte</option>
-                                    <option value="CAPUCCINO">Cappuccino</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label for="capsulaCantidad" class="form-label">Cantidad</label>
-                                <input type="number" class="form-control" id="capsulaCantidad" value="10" min="1" required>
-                            </div>
-                            <div class="col-md-2 d-grid">
-                                <button type="submit" class="btn btn-success">Añadir</button>
-                            </div>
-                        </form>
-                        <hr>
-                        <h2 class="h5 mt-4">Inventario Actual (Temporal)</h2>
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Ubicación Cafetera</th>
-                                        <th>Tipo de Café</th>
-                                        <th>Cantidad</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="capsulasTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-             <div class="card-footer text-center">
-                <a href="control.html">Ir a Control</a> | <a href="historial.html">Ver Historial</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="cafeteraModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle">Añadir Nueva Cafetera</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="formCafetera">
-                        <input type="hidden" id="cafeteraId">
-                        <div class="mb-3">
-                            <label for="cafeteraNombre" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" id="cafeteraNombre" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="cafeteraUbicacion" class="form-label">Ubicación</label>
-                            <input type="text" class="form-control" id="cafeteraUbicacion" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="cafeteraIp" class="form-label">Dirección IP</label>
-                            <input type="text" class="form-control" id="cafeteraIp" placeholder="Ej: 192.168.1.100" required>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary" id="btnGuardar">Guardar Cafetera</button>
-                        </div>
-                    </form>
+                    <div class="tab-pane fade show active p-3" id="cafeteras-content" role="tabpanel"><div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h5">Listado de Cafeteras</h2><button class="btn btn-primary" id="btnAnadirCafetera" data-bs-toggle="modal" data-bs-target="#cafeteraModal"><i class="bi bi-plus-circle-fill me-2"></i>Añadir Cafetera</button></div><div class="table-responsive"><table class="table table-striped table-hover"><thead><tr><th>ID</th><th>Nombre</th><th>Ubicación</th><th>IP</th><th>Acciones</th></tr></thead><tbody id="cafeterasTableBody"></tbody></table></div></div>
+                    <div class="tab-pane fade p-3" id="capsulas-content" role="tabpanel"><h2 class="h5 mb-3">Añadir Cápsulas al Inventario Visual</h2><form id="formCapsulas" class="row g-3 align-items-end"><div class="col-md-4"><label for="capsulaCafeteraSelect" class="form-label">Cafetera</label><select id="capsulaCafeteraSelect" class="form-select" required></select></div><div class="col-md-4"><label for="capsulaTipo" class="form-label">Tipo de Café</label><select id="capsulaTipo" class="form-select" required><option value="ESPRESSO">Espresso</option><option value="LATTE">Latte</option><option value="CAPUCCINO">Cappuccino</option></select></div><div class="col-md-2"><label for="capsulaCantidad" class="form-label">Cantidad</label><input type="number" class="form-control" id="capsulaCantidad" value="10" min="1" required></div><div class="col-md-2 d-grid"><button type="submit" class="btn btn-success">Añadir</button></div></form><hr><h2 class="h5 mt-4">Inventario Actual (Temporal)</h2><div class="table-responsive"><table class="table"><thead><tr><th>Ubicación Cafetera</th><th>Tipo de Café</th><th>Cantidad</th></tr></thead><tbody id="capsulasTableBody"></tbody></table></div></div>
                 </div>
             </div>
         </div>
     </div>
-
-
+    <div class="modal fade" id="cafeteraModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="modalTitle">Añadir Nueva Cafetera</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="formCafetera"><input type="hidden" id="cafeteraId"><div class="mb-3"><label for="cafeteraNombre" class="form-label">Nombre</label><input type="text" class="form-control" id="cafeteraNombre" required></div><div class="mb-3"><label for="cafeteraUbicacion" class="form-label">Ubicación</label><input type="text" class="form-control" id="cafeteraUbicacion" required></div><div class="mb-3"><label for="cafeteraIp" class="form-label">Dirección IP</label><input type="text" class="form-control" id="cafeteraIp" placeholder="Ej: 192.168.1.100" required></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary" id="btnGuardar">Guardar Cafetera</button></div></form></div></div></div></div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/config.js"></script>
     <script src="js/inventario.js"></script>
