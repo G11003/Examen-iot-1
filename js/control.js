@@ -104,41 +104,62 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Iniciar Preparación ---
-    const iniciarPreparacion = async () => {
-        const cafeteraId = cafeteraSelector.value;
-        const cafeteraSeleccionada = cafeteras.find(c => c.id === cafeteraId);
-        const estadoActual = statusCache[cafeteraId];
-        if (!cafeteraSeleccionada || !estadoActual) return;
-        btnIniciar.disabled = true;
-        btnIniciar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Redirigiendo...';
-        try {
-            // Se establece el estado inicial y se "olvida" de él.
-            await actualizarEstado(cafeteraId, { brewing_status: 'calentando_cafe', brewing_progreso: 0 });
+const iniciarPreparacion = async () => {
+    const cafeteraId = cafeteraSelector.value;
+    const cafeteraSeleccionada = cafeteras.find(c => c.id === cafeteraId);
+    if (!cafeteraSeleccionada) return;
 
-            const registroHistorial = {
-                cafeteraId: cafeteraId,
-                ip_address: cafeteraSeleccionada.ip_address,
-                ubicacion: cafeteraSeleccionada.ubicacion,
-                tipo_bebida: estadoActual.tipo_bebida,
-                temperatura_setting: estadoActual.temperatura_setting,
-                tamano_taza: estadoActual.tamano_taza
-            };
-            await fetch(`${API_URL}/historial`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(registroHistorial)
-            });
-            
-            // Redirige a la página de monitoreo para observar el proceso.
-            window.location.href = `monitoreo.html?id=${cafeteraId}`;
-        } catch (error) {
-            console.error(error);
-            alert('Error al iniciar la preparación.');
-            btnIniciar.disabled = false;
-            btnIniciar.innerHTML = '<i class="bi bi-play-fill me-2"></i>Iniciar Preparación';
+    btnIniciar.disabled = true;
+    btnIniciar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Redirigiendo...';
+
+    try {
+        const tipoBebidaActual = document.getElementById('tipoBebida').value;
+        const tamanoTazaActual = document.querySelector('input[name="tamano"]:checked').value;
+        const temperaturaActual = document.querySelector('input[name="temp"]:checked').value;
+        
+        await actualizarEstado(cafeteraId, { 
+            brewing_status: 'calentando_cafe', 
+            brewing_progreso: 0,
+            tipo_bebida: tipoBebidaActual,
+            tamano_taza: tamanoTazaActual,
+            temperatura_setting: temperaturaActual
+        });
+
+        const registroHistorial = {
+            cafeteraId: cafeteraId,
+            ip_address: cafeteraSeleccionada.ip_address,
+            ubicacion: cafeteraSeleccionada.ubicacion,
+            tipo_bebida: tipoBebidaActual,
+            temperatura_setting: temperaturaActual,
+            tamano_taza: tamanoTazaActual
+        };
+        
+        // --- BLOQUE DE CÓDIGO MEJORADO ---
+        // 1. Guardamos la respuesta de la API en una variable
+        const historialResponse = await fetch(`${API_URL}/historial`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(registroHistorial)
+        });
+        
+        // 2. Verificamos si la respuesta fue exitosa (código 2xx)
+        if (!historialResponse.ok) {
+            // Si no fue exitosa, leemos el error que devuelve la API
+            const errorData = await historialResponse.json();
+            console.error('Error del API al guardar historial:', errorData);
+            // Lanzamos un error para que lo capture el bloque catch
+            throw new Error('El servidor rechazó el registro del historial.');
         }
-    };
+        
+        window.location.href = `monitoreo.html?id=${cafeteraId}`;
 
+    } catch (error) {
+        console.error(error);
+        alert('Error al iniciar la preparación. Revisa la consola para más detalles.');
+        btnIniciar.disabled = false;
+        btnIniciar.innerHTML = '<i class="bi bi-play-fill me-2"></i>Iniciar Preparación';
+    }
+};
     // --- Event Listeners ---
     cafeteraSelector.addEventListener('change', (e) => {
         const selectedId = e.target.value;
