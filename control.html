@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Cafetera</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+
+    <div class="container mt-5">
+        <div class="card shadow-sm mx-auto" style="max-width: 600px;">
+            <div class="card-header bg-dark text-white">
+                <h1 class="h4 mb-0"><i class="bi bi-cup-hot-fill me-2"></i>Página de Control</h1>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <label for="cafeteraSelector" class="form-label fw-bold">1. Seleccione una Cafetera</label>
+                    <select class="form-select" id="cafeteraSelector">
+                        <option selected>Cargando cafeteras...</option>
+                    </select>
+                    <div id="cafeteraInfo" class="form-text mt-2"></div>
+                </div>
+
+                <div id="controlsContainer" class="d-none">
+                    <hr>
+                    <p class="fw-bold">2. Configure su bebida</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded bg-light">
+                        <label class="form-check-label fw-medium">Energía</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="powerSwitch">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Tamaño de Taza</label>
+                        <div class="btn-group w-100" role="group" id="tamanoTaza">
+                            <input type="radio" class="btn-check" name="tamano" id="tamanoEstandar" value="ESTANDAR" autocomplete="off">
+                            <label class="btn btn-outline-secondary" for="tamanoEstandar">Estándar</label>
+                            
+                            <input type="radio" class="btn-check" name="tamano" id="tamanoGrande" value="GRANDE" autocomplete="off">
+                            <label class="btn btn-outline-secondary" for="tamanoGrande">Grande</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="tipoBebida" class="form-label fw-medium">Tipo de Bebida</label>
+                        <select class="form-select" id="tipoBebida">
+                            <option value="ESPRESSO">Espresso</option>
+                            <option value="LATTE">Latte</option>
+                            <option value="CAPUCCINO">Cappuccino</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-medium">Temperatura</label>
+                        <div class="btn-group w-100" role="group" id="temperatura">
+                            <input type="radio" class="btn-check" name="temp" id="tempCaliente" value="caliente" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="tempCaliente"><i class="bi bi-thermometer-high"></i> Caliente</label>
+                            
+                            <input type="radio" class="btn-check" name="temp" id="tempFrio" value="frio" autocomplete="off">
+                            <label class="btn btn-outline-info" for="tempFrio"><i class="bi bi-snow"></i> Frío</label>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button class="btn btn-success btn-lg" id="btnIniciar" disabled>
+                            <i class="bi bi-play-fill me-2"></i>Iniciar Preparación
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-3">
+            <a href="inventario.html">Ir a Inventario</a> | <a href="historial.html">Ver Historial</a>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/control.js"></script>
+</body>
+</html>
