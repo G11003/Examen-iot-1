@@ -1,13 +1,35 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // ... (no cambian las variables iniciales)
     const cafeteraSelector = document.getElementById('cafeteraSelector');
     const cafeteraInfo = document.getElementById('cafeteraInfo');
     const controlsContainer = document.getElementById('controlsContainer');
     const btnIniciar = document.getElementById('btnIniciar');
+    const tipoBebidaSelect = document.getElementById('tipoBebida');
+
     let cafeteras = [];
     let statusCache = {};
 
-    // --- Cargar Cafeteras (sin cambios) ---
+    // --- Cargar Tipos de Bebida ---
+    const cargarTiposDeBebida = async () => {
+        try {
+            const response = await fetch(`${API_URL}/bebidas`);
+            const bebidas = await response.json();
+            tipoBebidaSelect.innerHTML = '';
+            if (bebidas.length === 0) {
+                tipoBebidaSelect.innerHTML = '<option disabled>No hay bebidas</option>';
+            }
+            bebidas.forEach(bebida => {
+                const option = document.createElement('option');
+                option.value = bebida.nombre;
+                option.textContent = bebida.nombre.charAt(0).toUpperCase() + bebida.nombre.slice(1).toLowerCase();
+                tipoBebidaSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error("Error al cargar tipos de bebida:", error);
+            tipoBebidaSelect.innerHTML = '<option disabled>Error al cargar</option>';
+        }
+    };
+
+    // --- Cargar Cafeteras ---
     const cargarCafeteras = async () => {
         try {
             const response = await fetch(`${API_URL}/cafeteras`);
@@ -26,10 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- Cargar Estado (URL CORREGIDA) ---
+    // --- Cargar y Mostrar Estado de Cafetera Seleccionada ---
     const cargarEstadoCafetera = async (cafeteraId) => {
         try {
-            // VOLVEMOS A LA URL PLANA CON PARÁMETRO DE BÚSQUEDA
             const response = await fetch(`${API_URL}/cafetera_status?cafeteraId=${cafeteraId}`);
             if (!response.ok) throw new Error('No se pudo obtener el estado');
             const statusArray = await response.json();
@@ -54,13 +75,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // --- Actualizar Estado (URL CORREGIDA) ---
+    // --- Actualizar Estado en la API (PUT) ---
     const actualizarEstado = async (cafeteraId, nuevoEstadoParcial) => {
         const estadoActual = statusCache[cafeteraId];
         if (!estadoActual) return;
         const estadoCompleto = { ...estadoActual, ...nuevoEstadoParcial };
         try {
-            // USAMOS LA URL PLANA, APUNTANDO AL ID DEL ESTADO
             const response = await fetch(`${API_URL}/cafetera_status/${estadoActual.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -77,9 +97,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- Iniciar Preparación (sin cambios) ---
+    // --- Iniciar Preparación ---
     const iniciarPreparacion = async () => {
-        // ... (el código de esta función es correcto y no necesita cambios)
         const cafeteraId = cafeteraSelector.value;
         const cafeteraSeleccionada = cafeteras.find(c => c.id === cafeteraId);
         const estadoActual = statusCache[cafeteraId];
@@ -110,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- Event Listeners (sin cambios) ---
+    // --- Event Listeners ---
     cafeteraSelector.addEventListener('change', (e) => {
         const selectedId = e.target.value;
         const cafetera = cafeteras.find(c => c.id === selectedId);
@@ -135,4 +154,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Carga Inicial ---
     cargarCafeteras();
+    cargarTiposDeBebida();
 });
