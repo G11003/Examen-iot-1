@@ -14,10 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const steam = document.getElementById('steam');
     const waves = document.getElementById('waves');
 
+    // --- Variables Globales ---
     let cafeteraData = null;
     let statusData = null;
     let monitoringInterval = null;
     let isSimulating = false;
+    let historialRegistrado = false;
 
     // --- Funciones Auxiliares ---
     const randomDelay = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
@@ -47,14 +49,41 @@ document.addEventListener('DOMContentLoaded', () => {
         return { coffee: 100, milk: 0 };
     };
 
+    const registrarEnHistorial = async () => {
+        if (historialRegistrado || !cafeteraData || !statusData) return;
+        const registroHistorial = {
+            cafeteraId: cafeteraData.id,
+            ip_address: cafeteraData.ip_address,
+            ubicacion: cafeteraData.ubicacion,
+            tipo_bebida: statusData.tipo_bebida,
+            temperatura_setting: statusData.temperatura_setting,
+            tamano_taza: statusData.tamano_taza
+        };
+        try {
+            const historialResponse = await fetch(`${API_URL}/historial`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(registroHistorial)
+            });
+            if (historialResponse.ok) {
+                console.log("Preparación registrada en el historial.");
+                historialRegistrado = true;
+            } else {
+                throw new Error("El servidor rechazó el registro del historial.");
+            }
+        } catch (error) {
+            console.error("Error al guardar en el historial:", error);
+        }
+    };
+
     // --- Lógica Principal de la Página ---
     const actualizarTaza = (estado) => {
         liquid.style.height = `${estado.brewing_progreso}%`;
         let colorPrincipal = '#654321';
         if (estado.brewing_status.includes('leche')) {
-            colorPrincipal = '#9c6e3fff';
+            colorPrincipal = '#D2B48C';
         } else if (['LATTE', 'CAPUCCINO', 'CORTADO'].includes(estado.tipo_bebida)) {
-            colorPrincipal = '#bf8660ff';
+            colorPrincipal = '#a05a2c';
         }
         liquid.style.background = `linear-gradient(145deg, ${colorPrincipal} 0%, #3a2411 100%)`;
         const enProceso = estado.brewing_status.includes('calentando') || estado.brewing_status.includes('dispensando');
@@ -62,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         waves.style.display = enProceso ? 'block' : 'none';
     };
 
-    const renderizarUI = () => {
+    const renderizarUI = async () => {
         if (!statusData) return;
         statusBadge.textContent = statusData.brewing_status.replace('_', ' ').toUpperCase();
         let badgeClass = 'bg-secondary';
@@ -86,14 +115,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const ejecutarSimulacion = (accion, duracion) => {
             isSimulating = true;
             setTimeout(() => {
-                actualizarEstadoAPI(accion).then(() => {
-                    isSimulating = false;
-                });
+                actualizarEstadoAPI(accion).then(() => { isSimulating = false; });
             }, duracion);
         };
 
         switch (statusData.brewing_status) {
             case 'calentando_cafe':
+                historialRegistrado = false;
                 ejecutarSimulacion({ brewing_status: 'dispensando_cafe', brewing_progreso: 15 }, randomDelay(2000, 3000));
                 break;
             case 'dispensando_cafe':
@@ -116,34 +144,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case 'finalizado':
                 clearInterval(monitoringInterval);
+                registrarEnHistorial();
                 setTimeout(() => actualizarEstadoAPI({ brewing_status: 'inactivo', brewing_progreso: 0 }), 8000);
                 break;
         }
     };
 
-const actualizarEstado = async () => {
-    if (!cafeteraData) return;
-    try {
-        const statusResponse = await fetch(`${API_URL}/cafetera_status?cafeteraId=${cafeteraData.id}`);
-        if (!statusResponse.ok) throw new Error('Fallo al obtener el estado');
-        
-        // CORRECCIÓN: Usamos la variable correcta 'statusResponse' en lugar de 'response'
-        const statusArray = await statusResponse.json();
-        
-        if (statusArray.length === 0) throw new Error('El estado de la cafetera no fue encontrado.');
-        
-        statusData = statusArray[0];
-        await renderizarUI();
-        if (!isSimulating) {
-            simularProceso();
+    const actualizarEstado = async () => {
+        if (!cafeteraData) return;
+        try {
+            const statusResponse = await fetch(`${API_URL}/cafetera_status?cafeteraId=${cafeteraData.id}`);
+            if (!statusResponse.ok) throw new Error('Fallo al obtener el estado');
+            const statusArray = await statusResponse.json();
+            if (statusArray.length === 0) throw new Error('El estado de la cafetera no fue encontrado.');
+            statusData = statusArray[0];
+            await renderizarUI();
+            if (!isSimulating) {
+                simularProceso();
+            }
+        } catch (error) {
+            console.error(error);
+            clearInterval(monitoringInterval);
+            statusBadge.textContent = 'ERROR';
+            statusBadge.className = 'badge bg-danger';
         }
-    } catch (error) {
-        console.error(error);
-        clearInterval(monitoringInterval);
-        statusBadge.textContent = 'ERROR';
-        statusBadge.className = 'badge bg-danger';
-    }
-};
+    };
 
     const iniciarMonitoreo = async () => {
         const params = new URLSearchParams(window.location.search);

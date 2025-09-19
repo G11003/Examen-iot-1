@@ -117,6 +117,15 @@ const iniciarPreparacion = async () => {
         const tamanoTazaActual = document.querySelector('input[name="tamano"]:checked').value;
         const temperaturaActual = document.querySelector('input[name="temp"]:checked').value;
         
+        // Descontar cápsula del inventario
+        const inventario = JSON.parse(localStorage.getItem('capsuleInventory')) || {};
+        const key = `${cafeteraId}_${tipoBebidaActual}`;
+        if (inventario[key] && inventario[key] > 0) {
+            inventario[key] -= 1;
+            localStorage.setItem('capsuleInventory', JSON.stringify(inventario));
+        }
+
+        // Actualizar estado para iniciar el proceso
         await actualizarEstado(cafeteraId, { 
             brewing_status: 'calentando_cafe', 
             brewing_progreso: 0,
@@ -124,33 +133,9 @@ const iniciarPreparacion = async () => {
             tamano_taza: tamanoTazaActual,
             temperatura_setting: temperaturaActual
         });
+        
+        // --- BLOQUE DE HISTORIAL ELIMINADO DE AQUÍ ---
 
-        const registroHistorial = {
-            cafeteraId: cafeteraId,
-            ip_address: cafeteraSeleccionada.ip_address,
-            ubicacion: cafeteraSeleccionada.ubicacion,
-            tipo_bebida: tipoBebidaActual,
-            temperatura_setting: temperaturaActual,
-            tamano_taza: tamanoTazaActual
-        };
-        
-        // --- BLOQUE DE CÓDIGO MEJORADO ---
-        // 1. Guardamos la respuesta de la API en una variable
-        const historialResponse = await fetch(`${API_URL}/historial`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(registroHistorial)
-        });
-        
-        // 2. Verificamos si la respuesta fue exitosa (código 2xx)
-        if (!historialResponse.ok) {
-            // Si no fue exitosa, leemos el error que devuelve la API
-            const errorData = await historialResponse.json();
-            console.error('Error del API al guardar historial:', errorData);
-            // Lanzamos un error para que lo capture el bloque catch
-            throw new Error('El servidor rechazó el registro del historial.');
-        }
-        
         window.location.href = `monitoreo.html?id=${cafeteraId}`;
 
     } catch (error) {
