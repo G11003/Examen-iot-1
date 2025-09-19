@@ -148,17 +148,20 @@ document.addEventListener('DOMContentLoaded', () => {
             capsulaTipoSelect.appendChild(option);
         });
     };
-    const renderizarTablaCapsulas = () => {
-        capsulasTableBody.innerHTML = '';
-        if (inventarioCapsulas.length === 0) {
-             capsulasTableBody.innerHTML = '<tr><td colspan="3" class="text-center">Aún no hay cápsulas en el inventario visual.</td></tr>';
-        }
-        inventarioCapsulas.forEach(capsula => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${capsula.ubicacion}</td><td>${capsula.tipo}</td><td>${capsula.cantidad}</td>`;
-            capsulasTableBody.appendChild(tr);
-        });
-    };
+const renderizarTablaCapsulas = () => {
+    capsulasTableBody.innerHTML = '';
+    if (inventarioCapsulas.length === 0) {
+        capsulasTableBody.innerHTML = '<tr><td colspan="2" class="text-center fst-italic text-muted"></td></tr>';
+        return; // Añadimos un return para no continuar
+    }
+    
+    inventarioCapsulas.forEach(capsula => {
+        const tr = document.createElement('tr');
+        // Esto ya es correcto para 2 columnas
+        tr.innerHTML = `<td>${capsula.ubicacion}</td><td>${capsula.tipo}</td>`;
+        capsulasTableBody.appendChild(tr);
+    });
+};
     const manejarSubmitCapsula = (e) => {
         e.preventDefault();
         if (!capsulaCafeteraSelect.value) {
